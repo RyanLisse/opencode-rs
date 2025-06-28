@@ -1,0 +1,11 @@
+# Ignore IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+
+# Ignore build artifacts
+/target/
+Cargo.lock
+
+# Ignore local environment files
+.env
