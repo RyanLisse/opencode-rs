@@ -1,3 +1,7 @@
+pub mod container;
+pub mod supervisor;
+pub mod git;
+
 use anyhow::{Context, Result};
 use async_openai::{
     config::OpenAIConfig,
