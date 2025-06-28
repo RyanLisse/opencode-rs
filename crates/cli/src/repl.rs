@@ -1,6 +1,5 @@
-use anyhow::{Context, Result};
-use reedline::{DefaultPrompt, Reedline, Signal, ReedlineEvent, EditCommand, UndoBehavior, Prompt};
-use std::io;
+use anyhow::Result;
+use reedline::{DefaultPrompt, Reedline, Signal};
 use opencode_core::supervisor::AgentSupervisor;
 use tracing::{info, warn, error, debug};
 
@@ -322,13 +321,25 @@ mod tests {
         assert_eq!(result, "Unknown command: /unknown");
     }
 
-    #[test_case("agent ls"; "agent ls")]
-    #[test_case("ask What is Rust?"; "ask command")]
-    #[test_case("version"; "version")]
     #[tokio::test]
-    async fn test_cli_command_parsing(command: &str, mut engine: ReplEngine) {
-        let result = engine.execute_line(command).await;
-        assert!(result.is_ok(), "Failed to execute command: {}", command);
+    async fn test_cli_command_parsing_agent_ls() {
+        let mut engine = ReplEngine::new();
+        let result = engine.execute_line("agent ls").await;
+        assert!(result.is_ok(), "Failed to execute command: agent ls");
+    }
+
+    #[tokio::test]
+    async fn test_cli_command_parsing_ask() {
+        let mut engine = ReplEngine::new();
+        let result = engine.execute_line("ask What is Rust?").await;
+        assert!(result.is_ok(), "Failed to execute command: ask What is Rust?");
+    }
+
+    #[tokio::test]
+    async fn test_cli_command_parsing_version() {
+        let mut engine = ReplEngine::new();
+        let result = engine.execute_line("version").await;
+        assert!(result.is_ok(), "Failed to execute command: version");
     }
 
     #[rstest]
@@ -415,7 +426,7 @@ mod tests {
     }
 
     // Property-based testing
-    #[cfg(feature = "proptest")]
+    #[cfg(test)]
     mod property_tests {
         use super::*;
         use proptest::prelude::*;

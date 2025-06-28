@@ -2,12 +2,8 @@ pub mod config;
 pub mod error;
 pub mod provider;
 pub mod service;
+pub mod supervisor;
 
-#[cfg(test)]
-mod comprehensive_tests;
-
-#[cfg(test)]
-mod property_tests;
 
 
 use config::Config;

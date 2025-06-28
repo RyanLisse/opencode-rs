@@ -148,7 +148,6 @@ async fn execute_ask_command(question: &str, persona: &str) -> Result<()> {
 
 async fn execute_version_command() -> Result<()> {
     println!("OpenCode-RS CLI v{}", env!("CARGO_PKG_VERSION"));
-    println!("Built with Rust {}", env!("RUSTC_VERBOSE_VERSION"));
     Ok(())
 }
 
@@ -167,22 +166,20 @@ mod tests {
 
     #[test]
     fn test_cli_help() {
-        let cmd = Cli::command();
+        let mut cmd = Cli::command();
         let help = cmd.render_help();
         assert!(help.to_string().contains("OpenCode"));
     }
 
-    #[test_case("agent", "ls"; "agent ls command")]
-    #[test_case("ask", "What is Rust?"; "ask command")]
+    #[test_case("agent ls"; "agent ls command")]
+    #[test_case("ask What is Rust?"; "ask command")]
     #[test_case("version"; "version command")]
-    fn test_command_parsing(command: &str, args: &str) {
-        let mut cmd_args = vec!["opencode", command];
-        if !args.is_empty() {
-            cmd_args.extend(args.split_whitespace());
-        }
+    fn test_command_parsing(cmd_line: &str) {
+        let mut cmd_args = vec!["opencode"];
+        cmd_args.extend(cmd_line.split_whitespace());
         
         let result = Cli::try_parse_from(cmd_args);
-        assert!(result.is_ok(), "Failed to parse command: {} {}", command, args);
+        assert!(result.is_ok(), "Failed to parse command: {}", cmd_line);
     }
 
     #[test]
@@ -264,7 +261,7 @@ mod tests {
     }
 
     // Property-based testing for command parsing
-    #[cfg(feature = "proptest")]
+    #[cfg(test)]
     mod property_tests {
         use super::*;
         use proptest::prelude::*;
