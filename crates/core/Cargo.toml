@@ -15,6 +15,20 @@ toml = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true }
 tokio-stream = { workspace = true }
+# Slice 3 dependencies
+serde_yml = { workspace = true }
+lexopt = { workspace = true }
+directories = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+# Testing dependencies for TDD
+mockall = { workspace = true }
+proptest = { workspace = true }
+pretty_assertions = { workspace = true }
+test-case = { workspace = true }
+rstest = { workspace = true }
+insta = { workspace = true }
+tracing-test = { workspace = true }

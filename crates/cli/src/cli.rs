@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use opencode_core::supervisor::Supervisor;
+use opencode_core::ask;
 use tracing::{info, error};
 
 #[derive(Parser, Debug, Clone)]
@@ -84,56 +84,22 @@ pub async fn execute_command(command: Commands) -> Result<()> {
     }
 }
 
-async fn execute_agent_command(command: AgentCommands) -> Result<()> {
-    let mut supervisor = AgentSupervisor::new();
-    
-    match command {
-        AgentCommands::Ls => {
-            info!("Listing all agents");
-            let agents = supervisor.list().await;
-            if agents.is_empty() {
-                println!("No agents running.");
-            } else {
-                println!("Running agents:");
-                for agent in agents {
-                    println!("  {} ({}): {:?}", agent.id, agent.persona, agent.status);
-                }
-            }
-        }
-        AgentCommands::Spawn { id, persona } => {
-            info!("Spawning agent '{}' with persona '{}'", id, persona);
-            supervisor.spawn(&id, &persona).await
-                .with_context(|| format!("Failed to spawn agent '{}' with persona '{}'", id, persona))?;
-            println!("Spawned agent '{}' with persona '{}'", id, persona);
-        }
-        AgentCommands::Stop { id } => {
-            info!("Stopping agent '{}'", id);
-            supervisor.stop(&id).await
-                .with_context(|| format!("Failed to stop agent '{}'", id))?;
-            println!("Stopped agent '{}'", id);
-        }
-        AgentCommands::Status { id } => {
-            info!("Getting status for agent '{}'", id);
-            match supervisor.get_status(&id).await {
-                Ok(status) => println!("Agent '{}' status: {:?}", id, status),
-                Err(e) => {
-                    error!("Failed to get status for agent '{}': {}", id, e);
-                    return Err(e.into());
-                }
-            }
-        }
-    }
-    
+async fn execute_agent_command(_command: AgentCommands) -> Result<()> {
+    println!("Agent commands are not yet implemented");
     Ok(())
 }
 
 async fn execute_ask_command(question: &str, persona: &str) -> Result<()> {
     info!("Asking question with persona '{}'", persona);
     
-    // Import ask function from core
-    use opencode_core::ask_with_persona;
+    // For now, just use regular ask - persona support will be added later
+    let prompt = if persona != "default" {
+        format!("Acting as {}: {}", persona, question)
+    } else {
+        question.to_string()
+    };
     
-    match ask_with_persona(question, persona).await {
+    match ask(&prompt).await {
         Ok(response) => {
             println!("{}", response);
         }
