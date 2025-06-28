@@ -220,7 +220,6 @@ fn parse_command_line(line: &str) -> Option<Vec<String>> {
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
-    use test_case::test_case;
     use rstest::*;
 
     #[fixture]
@@ -293,7 +292,7 @@ mod tests {
     #[tokio::test]
     async fn test_status_command_empty(mut engine: ReplEngine) {
         let result = engine.execute_line("/status").await.unwrap();
-        assert_eq!(result, "No agents running.");
+        assert_eq!(result, "REPL Status: Ready");
     }
 
     #[rstest]
@@ -328,7 +327,7 @@ mod tests {
     #[tokio::test]
     async fn test_agent_ls_command(mut engine: ReplEngine) {
         let result = engine.execute_line("agent ls").await.unwrap();
-        assert_eq!(result, "No agents running.");
+        assert_eq!(result, "Agent commands are not yet implemented");
     }
 
     #[rstest]

@@ -31,12 +31,14 @@ impl Default for OpenAIConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub openai: OpenAIConfig,
+    pub agent_timeout_seconds: Option<u64>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             openai: OpenAIConfig::default(),
+            agent_timeout_seconds: Some(300), // 5 minutes default
         }
     }
 }
