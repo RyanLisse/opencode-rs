@@ -1,17 +1,15 @@
 use anyhow::Result;
 use reedline::{DefaultPrompt, Reedline, Signal};
-use opencode_core::supervisor::AgentSupervisor;
+use opencode_core::{slash, ask};
 use tracing::{info, warn, error, debug};
 
 pub struct ReplEngine {
-    supervisor: AgentSupervisor,
     current_persona: String,
 }
 
 impl ReplEngine {
     pub fn new() -> Self {
         Self {
-            supervisor: AgentSupervisor::new(),
             current_persona: "default".to_string(),
         }
     }
@@ -38,6 +36,7 @@ impl ReplEngine {
     }
 
     async fn execute_slash_command(&mut self, line: &str) -> Result<String> {
+        // Handle special REPL commands first
         let parts: Vec<&str> = line[1..].split_whitespace().collect();
         
         match parts.first() {
@@ -53,15 +52,21 @@ impl ReplEngine {
             }
             Some(&"clear") => Ok("\x1B[2J\x1B[1;1H".to_string()), // ANSI clear screen
             Some(&"status") => {
-                let agents = self.supervisor.list().await;
-                if agents.is_empty() {
-                    Ok("No agents running.".to_string())
-                } else {
-                    let mut output = String::from("Running agents:\n");
-                    for agent in agents {
-                        output.push_str(&format!("  {} ({}): {:?}\n", agent.id, agent.persona, agent.status));
+                Ok("REPL Status: Ready".to_string())
+            }
+            Some(&"test") | Some(&"build") | Some(&"explain") => {
+                // Use our new slash command system for these commands
+                match slash::parse(line) {
+                    Ok(command) => {
+                        match slash::render(command) {
+                            Ok(prompt) => {
+                                info!("Executing slash command: {}", line);
+                                ask(&prompt).await.map_err(Into::into)
+                            }
+                            Err(e) => Ok(format!("Error rendering command: {}", e)),
+                        }
                     }
-                    Ok(output)
+                    Err(e) => Ok(format!("Error parsing command: {}", e)),
                 }
             }
             Some(cmd) => Ok(format!("Unknown command: /{}", cmd)),
@@ -84,36 +89,8 @@ impl ReplEngine {
                         Commands::Ask { question, persona } => {
                             self.execute_ask_with_persona(&question, &persona).await
                         }
-                        Commands::Agent(agent_cmd) => {
-                            use crate::cli::AgentCommands;
-                            match agent_cmd {
-                                AgentCommands::Ls => {
-                                    let agents = self.supervisor.list().await;
-                                    if agents.is_empty() {
-                                        Ok("No agents running.".to_string())
-                                    } else {
-                                        let mut output = String::from("Running agents:\n");
-                                        for agent in agents {
-                                            output.push_str(&format!("  {} ({}): {:?}\n", agent.id, agent.persona, agent.status));
-                                        }
-                                        Ok(output)
-                                    }
-                                }
-                                AgentCommands::Spawn { id, persona } => {
-                                    self.supervisor.spawn(&id, &persona).await?;
-                                    Ok(format!("Spawned agent '{}' with persona '{}'", id, persona))
-                                }
-                                AgentCommands::Stop { id } => {
-                                    self.supervisor.stop(&id).await?;
-                                    Ok(format!("Stopped agent '{}'", id))
-                                }
-                                AgentCommands::Status { id } => {
-                                    match self.supervisor.get_status(&id).await {
-                                        Ok(status) => Ok(format!("Agent '{}' status: {:?}", id, status)),
-                                        Err(e) => Ok(format!("Error getting status for agent '{}': {}", id, e)),
-                                    }
-                                }
-                            }
+                        Commands::Agent(_agent_cmd) => {
+                            Ok("Agent commands not yet implemented".to_string())
                         }
                         Commands::Version => {
                             Ok(format!("OpenCode-RS CLI v{}", env!("CARGO_PKG_VERSION")))
@@ -135,9 +112,14 @@ impl ReplEngine {
     }
 
     async fn execute_ask_with_persona(&self, question: &str, persona: &str) -> Result<String> {
-        use opencode_core::ask_with_persona;
+        // For now, just use regular ask - persona support will be added later
+        let prompt = if persona != "default" {
+            format!("Acting as {}: {}", persona, question)
+        } else {
+            question.to_string()
+        };
         
-        match ask_with_persona(question, persona).await {
+        match ask(&prompt).await {
             Ok(response) => Ok(response),
             Err(e) => Ok(format!("Error: {}", e)),
         }
@@ -433,23 +415,25 @@ mod tests {
 
         proptest! {
             #[test]
-            fn test_slash_commands_dont_panic(cmd in "/[a-zA-Z]+") {
+            fn test_slash_commands_dont_panic(cmd in "/[a-zA-Z]+") -> proptest::test_runner::TestCaseResult {
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 rt.block_on(async {
                     let mut engine = ReplEngine::new();
                     let result = engine.execute_line(&cmd).await;
                     prop_assert!(result.is_ok());
-                });
+                    Ok(())
+                })
             }
 
             #[test]
-            fn test_empty_and_whitespace_lines(line in r"\s*") {
+            fn test_empty_and_whitespace_lines(line in r"\s*") -> proptest::test_runner::TestCaseResult {
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 rt.block_on(async {
                     let mut engine = ReplEngine::new();
                     let result = engine.execute_line(&line).await;
                     prop_assert!(result.is_ok());
-                });
+                    Ok(())
+                })
             }
         }
     }

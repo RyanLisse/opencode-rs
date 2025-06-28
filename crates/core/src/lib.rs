@@ -1,8 +1,9 @@
 pub mod config;
 pub mod error;
+pub mod personas;
 pub mod provider;
 pub mod service;
-pub mod supervisor;
+pub mod slash;
 
 
 
