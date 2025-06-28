@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use opencode_core::supervisor::AgentSupervisor;
-use tracing::{info, warn, error};
+use opencode_core::supervisor::Supervisor;
+use tracing::{info, error};
 
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]

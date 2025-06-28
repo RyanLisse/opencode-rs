@@ -1,10 +1,10 @@
 use anyhow::Result;
 use reedline::{DefaultPrompt, Reedline, Signal};
-use opencode_core::supervisor::AgentSupervisor;
+use opencode_core::supervisor::Supervisor;
 use tracing::{info, warn, error, debug};
 
 pub struct ReplEngine {
-    supervisor: AgentSupervisor,
+    supervisor: Supervisor,
     current_persona: String,
 }
 
@@ -238,7 +238,6 @@ fn parse_command_line(line: &str) -> Option<Vec<String>> {
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
-    use test_case::test_case;
     use rstest::*;
 
     #[fixture]
@@ -435,21 +434,21 @@ mod tests {
             #[test]
             fn test_slash_commands_dont_panic(cmd in "/[a-zA-Z]+") {
                 let rt = tokio::runtime::Runtime::new().unwrap();
-                rt.block_on(async {
+                let result = rt.block_on(async {
                     let mut engine = ReplEngine::new();
-                    let result = engine.execute_line(&cmd).await;
-                    prop_assert!(result.is_ok());
+                    engine.execute_line(&cmd).await
                 });
+                prop_assert!(result.is_ok());
             }
 
             #[test]
             fn test_empty_and_whitespace_lines(line in r"\s*") {
                 let rt = tokio::runtime::Runtime::new().unwrap();
-                rt.block_on(async {
+                let result = rt.block_on(async {
                     let mut engine = ReplEngine::new();
-                    let result = engine.execute_line(&line).await;
-                    prop_assert!(result.is_ok());
+                    engine.execute_line(&line).await
                 });
+                prop_assert!(result.is_ok());
             }
         }
     }

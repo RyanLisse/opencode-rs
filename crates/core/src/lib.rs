@@ -4,7 +4,8 @@ pub mod provider;
 pub mod service;
 pub mod supervisor;
 
-
+#[cfg(test)]
+mod additional_tests;
 
 use config::Config;
 use error::Result;
@@ -87,6 +88,42 @@ pub async fn ask_with_messages(messages: Vec<Message>) -> Result<String> {
     Ok(response.content)
 }
 
+/// Ask with a persona
+pub async fn ask_with_persona(prompt: &str, persona: &str) -> Result<String> {
+    let container = get_service_container()?;
+    let provider = container.get_default_provider()?;
+
+    // Create system message with persona context
+    let system_message = match persona {
+        "default" => "You are a helpful assistant.".to_string(),
+        "expert" => "You are an expert software developer with deep knowledge of programming languages, best practices, and system design.".to_string(),
+        "rusty" => "You are a Rust programming expert who loves systems programming, memory safety, and performance optimization.".to_string(),
+        "pythonic" => "You are a Python expert who values clean, readable code and knows the ecosystem deeply.".to_string(),
+        _ => format!("You are a helpful assistant with the personality of a {} expert.", persona),
+    };
+
+    let messages = vec![
+        Message {
+            role: "system".to_string(),
+            content: system_message,
+        },
+        Message {
+            role: "user".to_string(),
+            content: prompt.to_string(),
+        },
+    ];
+
+    let request = CompletionRequest {
+        model: container.config().openai.default_model.clone(),
+        messages,
+        temperature: Some(0.7),
+        max_tokens: Some(1000),
+        stream: false,
+    };
+
+    let response = provider.complete(request).await?;
+    Ok(response.content)
+}
 
 #[cfg(test)]
 mod tests {
@@ -199,15 +236,6 @@ mod tests {
         assert_eq!(response.content, "Test response from global");
     }
 
-    #[test]
-    fn test_service_not_initialized() {
-        // Clear any existing container (this is a limitation of using OnceLock in tests)
-        // In practice, we'd use a different pattern for testability
-        
-        // This test verifies the error when service is not initialized
-        // The actual behavior depends on whether init() was called previously
-    }
-
     #[tokio::test]
     async fn test_ask_with_persona_default() {
         let container = setup_test_container();
@@ -284,5 +312,11 @@ mod tests {
 
         let response = provider.complete(request).await.unwrap();
         assert_eq!(response.content, "Test response from global");
+    }
+
+    #[test]
+    fn test_service_not_initialized() {
+        // This test verifies the error when service is not initialized
+        // The actual behavior depends on whether init() was called previously
     }
 }
