@@ -3,6 +3,13 @@ pub mod error;
 pub mod provider;
 pub mod service;
 
+#[cfg(test)]
+mod comprehensive_tests;
+
+#[cfg(test)]
+mod property_tests;
+
+
 use config::Config;
 use error::Result;
 use provider::{CompletionRequest, Message};
@@ -83,6 +90,7 @@ pub async fn ask_with_messages(messages: Vec<Message>) -> Result<String> {
     let response = provider.complete(request).await?;
     Ok(response.content)
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -202,5 +210,83 @@ mod tests {
         
         // This test verifies the error when service is not initialized
         // The actual behavior depends on whether init() was called previously
+    }
+
+    #[tokio::test]
+    async fn test_ask_with_persona_default() {
+        let container = setup_test_container();
+        let provider = container.get_provider("mock").unwrap();
+
+        let request = CompletionRequest {
+            model: container.config().openai.default_model.clone(),
+            messages: vec![
+                Message {
+                    role: "system".to_string(),
+                    content: "You are a helpful assistant.".to_string(),
+                },
+                Message {
+                    role: "user".to_string(),
+                    content: "Hello".to_string(),
+                },
+            ],
+            temperature: Some(0.7),
+            max_tokens: Some(1000),
+            stream: false,
+        };
+
+        let response = provider.complete(request).await.unwrap();
+        assert_eq!(response.content, "Test response from global");
+    }
+
+    #[tokio::test]
+    async fn test_ask_with_persona_expert() {
+        let container = setup_test_container();
+        let provider = container.get_provider("mock").unwrap();
+
+        let request = CompletionRequest {
+            model: container.config().openai.default_model.clone(),
+            messages: vec![
+                Message {
+                    role: "system".to_string(),
+                    content: "You are an expert software developer with deep knowledge of programming languages, best practices, and system design.".to_string(),
+                },
+                Message {
+                    role: "user".to_string(),
+                    content: "Test expert persona".to_string(),
+                },
+            ],
+            temperature: Some(0.7),
+            max_tokens: Some(1000),
+            stream: false,
+        };
+
+        let response = provider.complete(request).await.unwrap();
+        assert_eq!(response.content, "Test response from global");
+    }
+
+    #[tokio::test]
+    async fn test_ask_with_persona_custom() {
+        let container = setup_test_container();
+        let provider = container.get_provider("mock").unwrap();
+
+        let request = CompletionRequest {
+            model: container.config().openai.default_model.clone(),
+            messages: vec![
+                Message {
+                    role: "system".to_string(),
+                    content: "You are a helpful assistant with the personality of a custom expert.".to_string(),
+                },
+                Message {
+                    role: "user".to_string(),
+                    content: "Test custom persona".to_string(),
+                },
+            ],
+            temperature: Some(0.7),
+            max_tokens: Some(1000),
+            stream: false,
+        };
+
+        let response = provider.complete(request).await.unwrap();
+        assert_eq!(response.content, "Test response from global");
     }
 }

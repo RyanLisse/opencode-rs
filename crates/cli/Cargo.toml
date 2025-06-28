@@ -1,0 +1,32 @@
+[package]
+name = "opencode-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "opencode"
+path = "src/main.rs"
+
+[dependencies]
+opencode_core = { path = "../core" }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }
+reedline = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yml = { workspace = true }
+directories = { workspace = true }
+tracing = "0.1"
+
+[dev-dependencies]
+mockall = { workspace = true }
+proptest = { workspace = true }
+pretty_assertions = { workspace = true }
+test-case = { workspace = true }
+tracing-test = { workspace = true }
+tempfile = { workspace = true }
+fake = { workspace = true }
+arbitrary = { workspace = true }
+rstest = { workspace = true }
+insta = { workspace = true }

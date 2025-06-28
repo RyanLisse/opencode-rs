@@ -1,0 +1,38 @@
+{
+    "version": "0.1.0",
+    "description": "AI-powered, sandboxed coding suite in Rust",
+    "homepage": "https://github.com/your-org/opencode-rs",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/your-org/opencode-rs/releases/download/v0.1.0/opencode-x86_64-windows-msvc.zip",
+            "hash": "sha256-goes-here",
+            "extract_dir": "."
+        }
+    },
+    "bin": "opencode.exe",
+    "shortcuts": [
+        [
+            "opencode.exe",
+            "OpenCode CLI"
+        ]
+    ],
+    "persist": [
+        "config"
+    ],
+    "checkver": {
+        "github": "https://github.com/your-org/opencode-rs"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/your-org/opencode-rs/releases/download/v$version/opencode-x86_64-windows-msvc.zip"
+            }
+        }
+    },
+    "notes": [
+        "OpenCode CLI installed successfully!",
+        "Run 'opencode --help' to get started.",
+        "For GUI version, download the installer from: https://github.com/your-org/opencode-rs/releases"
+    ]
+}
